@@ -1,0 +1,27 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "isBackground": true,
+            "options": {
+                "cwd": "${workspaceFolder}"
+                },
+            "command" : "idf.py build",
+            "group":{
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "openocd",
+            "type": "shell",
+            "isBackground": true,
+            "options": {
+                "cwd": "${workspaceFolder}"
+                },
+            "command" : "openocd -f interface/jlink.cfg -f board/esp-wroom-32.cfg"
+        }
+    ]
+}

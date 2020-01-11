@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "sdkconfig.h": "c",
+        "freertos.h": "c",
+        "esp_spi_flash.h": "c",
+        "*.inc": "c",
+        "esp_system.h": "c"
+    }
+}

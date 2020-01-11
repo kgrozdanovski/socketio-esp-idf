@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/kristijan/Documents/Projects/Constellation/HWI/build/CMakeFiles/bootloader"
+		},
+		{
+			"file" : "/home/kristijan/Documents/Projects/Constellation/HWI/build/CMakeFiles/bootloader.rule"
+		},
+		{
+			"file" : "/home/kristijan/Documents/Projects/Constellation/HWI/build/CMakeFiles/bootloader-complete.rule"
+		},
+		{
+			"file" : "/home/kristijan/Documents/Projects/Constellation/HWI/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule"
+		},
+		{
+			"file" : "/home/kristijan/Documents/Projects/Constellation/HWI/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule"
+		},
+		{
+			"file" : "/home/kristijan/Documents/Projects/Constellation/HWI/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule"
+		},
+		{
+			"file" : "/home/kristijan/Documents/Projects/Constellation/HWI/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule"
+		},
+		{
+			"file" : "/home/kristijan/Documents/Projects/Constellation/HWI/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule"
+		},
+		{
+			"file" : "/home/kristijan/Documents/Projects/Constellation/HWI/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule"
+		},
+		{
+			"file" : "/home/kristijan/Documents/Projects/Constellation/HWI/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"bootloader"
+		],
+		"name" : "bootloader"
+	}
+}

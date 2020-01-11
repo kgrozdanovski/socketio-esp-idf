@@ -1,0 +1,81 @@
+// {
+//     // See https://go.microsoft.com/fwlink/?LinkId=733558 
+//     // for the documentation about the tasks.json format
+//     "version": "2.0.0",
+//     "tasks": [
+//         {
+//             "type": "shell",
+//             "label": "gcc build active file",
+//             "command": "/usr/bin/gcc",
+//             "args": [
+//                 "-g",
+//                 "${file}",
+//                 "-o",
+//                 "${fileDirname}/${fileBasenameNoExtension}"
+//             ],
+//             "options": {
+//                 "cwd": "/usr/bin"
+//             },
+//             "problemMatcher": [
+//                 "$gcc"
+//             ],
+//             "group": {
+//                 "kind": "build",
+//                 "isDefault": true
+//             }
+//         },
+//         {
+//             "type": "shell",
+//             "label": "gcc build active file",
+//             "command": "/usr/bin/gcc",
+//             "args": [
+//                 "-g",
+//                 "${file}",
+//                 "-o",
+//                 "${fileDirname}/${fileBasenameNoExtension}"
+//             ],
+//             "options": {
+//                 "cwd": "/usr/bin"
+//             },
+//             "problemMatcher": [
+//                 "$gcc"
+//             ]
+//         }
+//     ]
+// }
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "isBackground": true,
+            "options": {
+                "cwd": "${workspaceFolder}"
+                },
+            "command" : "idf.py build",
+            "group":{
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "openocd",
+            "type": "shell",
+            "isBackground": true,
+            "options": {
+                "cwd": "${workspaceFolder}"
+                },
+            "command" : "openocd -f interface/jlink.cfg -f board/esp-wroom-32.cfg"
+        },
+        {
+            "label": "flash_monitor",
+            "type": "shell",
+            "isBackground": true,
+            "options": {
+                "cwd": "${workspaceFolder}"
+                },
+            "command" : "idf.py -p /dev/ttyUSB0 flash monitor"
+        },
+    ]
+}
