@@ -17,11 +17,13 @@
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
 #include "esp_system.h"
-// #include "esp_spi_flash.h"
+
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "nvs_flash.h"
 #include "esp_websocket_client.h"
+#include "esp_http_client.h"
+
 
 #ifdef CONFIG_IDF_TARGET_ESP32
     #define CHIP_NAME "ESP32"
@@ -55,6 +57,7 @@ static int s_retry_num = 0;
 
 /* Prototype */
 void websocket_connect(void);
+void socketio_http_handshake(void);
 
 static void wifi_event_handler(void* arg, esp_event_base_t event_base, 
                                 int32_t event_id, void* event_data)
@@ -78,8 +81,10 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
 
         // Event-based function call flow should be kept in mind. 
         // We cannot attempt to connect to a WebSocket server without an Internet connection first.
-        printf("Establishing WebSocket link...\n");
-        websocket_connect();
+        //printf("Establishing WebSocket link...\n");
+        //websocket_connect();
+        printf("Attempting to perform HTTP SocketIO handshake...\n");
+        socketio_http_handshake();
     }
 }
 
@@ -178,6 +183,48 @@ void websocket_connect(void){
     }
 }
 
+void socketio_http_handshake(){
+    printf("Handshake begin...\n");
+
+    const char *path = "/socket.io/";
+    const char *query = "?EIO=3&transport=polling&t=M-NR8iO";
+
+    esp_err_t err;
+    esp_http_client_config_t config = {
+        // .url = "http://httpbin.org/get",
+        .url = "http://192.168.100.11:8070/socket.io/?EIO=3&transport=polling&t=M-NR8iO",
+        .port = 8070,
+        .path = path,
+        .query = query,
+    };
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    
+    printf("Performing first request...\n");
+    // first request
+    err = esp_http_client_perform(client);
+    ESP_ERROR_CHECK(err);   // terminates program if error
+
+    ESP_LOGI(TAG, "Status = %d, content_length = %d",
+           esp_http_client_get_status_code(client),
+           esp_http_client_get_content_length(client));
+    
+    // second request
+    // esp_http_client_set_url(client, "http://httpbin.org/anything");
+    // esp_http_client_set_method(client, HTTP_METHOD_DELETE);
+    // esp_http_client_set_header(client, "HeaderKey", "HeaderValue");
+
+    // printf("Performing second request...\n");
+    // err = esp_http_client_perform(client);
+    // ESP_ERROR_CHECK(err);   // terminates program if error
+
+    // ESP_LOGI(TAG, "Status = %d, content_length = %d",
+    //        esp_http_client_get_status_code(client),
+    //        esp_http_client_get_content_length(client));
+
+    printf("Performing client cleanup...\n");
+    esp_http_client_cleanup(client);
+}
+
 void app_main(void)
 {
     // Initialize NVS
@@ -196,9 +243,8 @@ void app_main(void)
     wifi_connect();
 
     printf("End of main process.\n");
+
     // printf("Restarting in 5 seconds...\n");
-
     // vTaskDelay(5000 / portTICK_PERIOD_MS);
-
     // esp_restart();
 }

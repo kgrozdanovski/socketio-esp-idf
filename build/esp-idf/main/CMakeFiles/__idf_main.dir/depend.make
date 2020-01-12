@@ -22,6 +22,7 @@ esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/e
 esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/esp_event/include/esp_event.h
 esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/esp_event/include/esp_event_base.h
 esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/esp_event/include/esp_event_legacy.h
+esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/esp_http_client/include/esp_http_client.h
 esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/esp_netif/include/esp_netif.h
 esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/esp_netif/include/esp_netif_defaults.h
 esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/esp_netif/include/esp_netif_ip_addr.h
@@ -81,6 +82,7 @@ esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/e
 esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/newlib/platform_include/sys/select.h
 esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/newlib/platform_include/sys/time.h
 esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/newlib/platform_include/time.h
+esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/nghttp/port/include/http_parser.h
 esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/nvs_flash/include/nvs.h
 esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/nvs_flash/include/nvs_flash.h
 esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.c.obj: /home/kristijan/esp/esp-idf/components/soc/esp32/include/soc/cpu.h

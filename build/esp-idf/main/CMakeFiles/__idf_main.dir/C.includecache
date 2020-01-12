@@ -29,6 +29,8 @@ nvs_flash.h
 /home/kristijan/Documents/Projects/Constellation/HWI/main/nvs_flash.h
 esp_websocket_client.h
 /home/kristijan/Documents/Projects/Constellation/HWI/main/esp_websocket_client.h
+esp_http_client.h
+/home/kristijan/Documents/Projects/Constellation/HWI/main/esp_http_client.h
 
 /home/kristijan/esp/esp-idf/components/driver/include/driver/spi_common.h
 stdint.h
@@ -181,6 +183,16 @@ esp_wifi_types.h
 /home/kristijan/esp/esp-idf/components/esp_event/include/esp_wifi_types.h
 esp_netif.h
 /home/kristijan/esp/esp-idf/components/esp_event/include/esp_netif.h
+
+/home/kristijan/esp/esp-idf/components/esp_http_client/include/esp_http_client.h
+freertos/FreeRTOS.h
+/home/kristijan/esp/esp-idf/components/esp_http_client/include/freertos/FreeRTOS.h
+http_parser.h
+/home/kristijan/esp/esp-idf/components/esp_http_client/include/http_parser.h
+sdkconfig.h
+/home/kristijan/esp/esp-idf/components/esp_http_client/include/sdkconfig.h
+esp_err.h
+/home/kristijan/esp/esp-idf/components/esp_http_client/include/esp_err.h
 
 /home/kristijan/esp/esp-idf/components/esp_netif/include/esp_netif.h
 stdint.h
@@ -751,6 +763,16 @@ sys/types.h
 -
 
 /home/kristijan/esp/esp-idf/components/newlib/platform_include/time.h
+
+/home/kristijan/esp/esp-idf/components/nghttp/port/include/http_parser.h
+sys/types.h
+-
+BaseTsd.h
+-
+stddef.h
+-
+stdint.h
+-
 
 /home/kristijan/esp/esp-idf/components/nvs_flash/include/nvs.h
 stdint.h
