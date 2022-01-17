@@ -1,4 +1,4 @@
-# _SocketIO client for ESP-IDF_
+![Project banner](assets/socketio-esp-idf-banner.png)
 
 ## Overview
 
