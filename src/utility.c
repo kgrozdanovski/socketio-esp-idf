@@ -45,6 +45,25 @@ void util_substr(
     }
 }
 
+char *util_mkrndstr(size_t length)
+{
+    char *randomString;
+    randomString = malloc(length +1); // sizeof(char) == 1, cf. C99
+
+        if (randomString) {
+            int l = (int) (TOKEN_CHARSET_SIZE);
+            int key;
+            for (int n = 0;n < length;n++) {        
+                key = rand() % l;   // no instantiation, just assignment, no overhead from sizeof
+                randomString[n] = token_charset[key];
+            }
+
+            randomString[length] = '\0';
+        }
+
+    return randomString;
+}
+
 char *util_extract_json(char *pc_buffer)
 {
     // Empty?
@@ -92,7 +111,5 @@ char *util_extract_json(char *pc_buffer)
     }
     i_strlen = strlen(pc_buffer);
 
-    // Done
-    ESP_LOGV(SIO_UTIL_TAG, "util_extract_json(): REMOVED %d CHARS", i_strlen_original - i_strlen);
     return pc_buffer;
 }

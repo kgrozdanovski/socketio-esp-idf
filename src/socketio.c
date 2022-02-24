@@ -20,13 +20,35 @@
 
 esp_err_t _http_event_handler(esp_http_client_event_t *evt);
 
-esp_err_t socketio_connect(const char* server_url)
+ESP_EVENT_DEFINE_BASE(SIO_EVENT);
+
+void socketio_client_init(sio_client_t *sio_client, const char *server_address)
+{
+    sio_client->server_address = server_address;
+    sio_client->max_connect_retries = SIO_DEFAULT_MAX_CONN_RETRIES;
+    sio_client->retry_interval_ms = SIO_DEFAULT_RETRY_INTERVAL_MS;
+    sio_client->eio_version = EIO_VERSION;
+    sio_client->transport = SIO_TRANSPORT_POLLING;
+    sio_client->namespace = SIO_DEFAULT_NAMESPACE;
+    sio_client->token = util_mkrndstr(SIO_TOKEN_SIZE);
+}
+
+esp_err_t socketio_begin(sio_client_t *sio_client, uint8_t connect_retries)
 {
     esp_err_t handshake;
 
+    connect_retries = connect_retries ?: 0;
+
     // Protocol relies on primarily establishing a HTTP handshake
-    handshake = socketio_http_handshake(server_url);
+    handshake = socketio_http_handshake(sio_client);
     if (handshake != ESP_OK) {
+        if (connect_retries < sio_client->max_connect_retries) {
+            connect_retries++;
+            vTaskDelay(pdMS_TO_TICKS(sio_client->retry_interval_ms));
+
+            return socketio_begin(sio_client, connect_retries);
+        }
+
         return handshake;
     }
 
@@ -34,27 +56,30 @@ esp_err_t socketio_connect(const char* server_url)
     return ESP_OK;
 }
 
-esp_err_t socketio_http_handshake(const char *server_address)
+esp_err_t socketio_http_handshake(sio_client_t *sio_client)
 {
-    size_t server_address_len = strlen(server_address);
+    size_t server_address_len = strlen(sio_client->server_address);
     char response_buffer[MAX_HTTP_RECV_BUFFER] = {0};
 
+    // Post event 
+    esp_event_post(SIO_EVENT, SIO_EVENT_READY, sio_client->server_address, server_address_len, pdMS_TO_TICKS(50));
+
     esp_http_client_config_t config = {
-        .url = server_address,
+        .url = sio_client->server_address,
         .event_handler = _http_event_handler,
         .user_data = response_buffer,        // Pass address of local buffer to get response
         .disable_auto_redirect = true
     };
-    esp_http_client_handle_t client = esp_http_client_init(&config);
+    sio_client->http_client = esp_http_client_init(&config);
 
-    esp_err_t err = esp_http_client_perform(client);
+    esp_err_t err = esp_http_client_perform(sio_client->http_client);
     if (err != ESP_OK) {
         ESP_LOGE(SIO_TAG, "HTTP GET request failed: %s", esp_err_to_name(err));
         return err;
     }
 
-    int http_response_status_code = esp_http_client_get_status_code(client);
-    int http_response_content_length = esp_http_client_get_content_length(client);
+    int http_response_status_code = esp_http_client_get_status_code(sio_client->http_client);
+    int http_response_content_length = esp_http_client_get_content_length(sio_client->http_client);
     ESP_LOGI(
         SIO_TAG, "HTTP GET Status = %d, content_length = %d",
         http_response_status_code,
@@ -114,16 +139,16 @@ esp_err_t socketio_http_handshake(const char *server_address)
      */
 
     // The new URL must contain the previously received SID
-    char sid_query_param[SIO_SID_LENGTH + 5] = "&sid=";
+    char sid_query_param[SIO_SID_SIZE + 5] = "&sid=";
     strcat(sid_query_param, sid);
 
     ESP_LOGV(SIO_TAG, "sid_query_param: %s", sid_query_param);
 
-    size_t url_length = server_address_len + SIO_SID_LENGTH + 5;
+    size_t url_length = server_address_len + SIO_SID_SIZE + 5;
     char nc_request_url[url_length];
     memset(nc_request_url, 0, url_length * sizeof(char));
 
-    strcpy(nc_request_url, server_address);
+    strcpy(nc_request_url, sio_client->server_address);
     strcat(nc_request_url, sid_query_param);
 
     ESP_LOGV(SIO_TAG, "nc_request_url: %s", nc_request_url);
@@ -132,31 +157,92 @@ esp_err_t socketio_http_handshake(const char *server_address)
     char* post_data = malloc(3);
     snprintf(post_data, 3, "%d", post_data_numeric);
 
-    esp_http_client_set_url(client, nc_request_url); 
-    esp_http_client_set_method(client, HTTP_METHOD_POST);
-    esp_http_client_set_header(client, "Content-Type", "text/plain");
-    esp_http_client_set_header(client, "Accept", "text/html");
-    esp_http_client_set_post_field(client, post_data, 2);
+    esp_http_client_set_url(sio_client->http_client, nc_request_url); 
+    esp_http_client_set_method(sio_client->http_client, HTTP_METHOD_POST);
+    esp_http_client_set_header(sio_client->http_client, "Content-Type", "text/plain");
+    esp_http_client_set_header(sio_client->http_client, "Accept", "text/html");
+    esp_http_client_set_post_field(sio_client->http_client, post_data, 2);
 
     ESP_LOGI(SIO_TAG, "Performing SocketIO Namespace Connection Request...");
 
-    err = esp_http_client_perform(client);
+    err = esp_http_client_perform(sio_client->http_client);
     if (err == ESP_OK) {
-        ESP_LOGI(SIO_TAG, "HTTP POST Status = %d, content_length = %d",
-                esp_http_client_get_status_code(client),
-                esp_http_client_get_content_length(client));
-    } else {
-        ESP_LOGE(SIO_TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
-   }
+        esp_event_post(SIO_EVENT, SIO_EVENT_CONNECTED_HTTP, sid, SIO_SID_SIZE, pdMS_TO_TICKS(50));
 
-    err = esp_http_client_close(client);
-    if (err != ESP_OK) {
-        ESP_LOGE(SIO_TAG, "Failed to close HTTP client: %s", esp_err_to_name(err));
+        // Begin long-polling
+        // xTaskCreate(&socketio_polling, "socketio_polling",  2048, NULL, 6, NULL);
+
+        ESP_LOGI(SIO_TAG, "HTTP POST Status = %d, content_length = %d",
+                esp_http_client_get_status_code(sio_client->http_client),
+                esp_http_client_get_content_length(sio_client->http_client));
+    } else {
+        esp_event_post(SIO_EVENT, SIO_EVENT_CONNECT_ERROR, sid, SIO_SID_SIZE, pdMS_TO_TICKS(50));
+
+        ESP_LOGE(SIO_TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
     }
 
-    ESP_LOGV(SIO_TAG, "Performing client cleanup...\n");
-    return esp_http_client_cleanup(client);
+    // todo: reply to ping-pong logic
+
+   // util_extract_json(&response_buffer);
+    // ESP_LOGI(SIO_TAG, "Cleaned response buffer: %s", response_buffer);
+
+    // esp_websocket_client_config_t config = {
+    //     .uri = sio_client->server_address
+    // };
+    // esp_websocket_client_handle_t client = esp_websocket_client_init(&config);
+
+    // bool conn = esp_websocket_client_is_connected(client);
+    // ESP_LOGI(SIO_TAG, "ESP Websocket client connected: %d", conn);    
+
+    vTaskDelay(pdMS_TO_TICKS(5000));
+
+    // err = esp_http_client_close(client);
+    // if (err != ESP_OK) {
+    //     ESP_LOGE(SIO_TAG, "Failed to close HTTP client: %s", esp_err_to_name(err));
+    // }
+
+    // esp_event_post(SIO_EVENT, SIO_EVENT_DISCONNECTED, sid, SIO_SID_SIZE, pdMS_TO_TICKS(50));
+
+    // ESP_LOGV(SIO_TAG, "Performing client cleanup...\n");
+    // return esp_http_client_cleanup(client);
+
+    return ESP_OK;
 }
+
+// void socketio_polling(void *ignore)
+// {
+//     esp_err_t;
+
+// 	uint8_t post_data_numeric = EIO_PACKET_MESSAGE * 10 + SIO_PACKET_CONNECT;
+//     char* post_data = malloc(3);
+//     snprintf(post_data, 3, "%d", post_data_numeric);
+
+//     esp_http_client_set_url(sio_client->http_client, nc_request_url); 
+//     esp_http_client_set_method(sio_client->http_client, HTTP_METHOD_POST);
+//     esp_http_client_set_header(sio_client->http_client, "Content-Type", "text/plain");
+//     esp_http_client_set_header(sio_client->http_client, "Accept", "text/html");
+//     esp_http_client_set_post_field(sio_client->http_client, post_data, 2);
+
+//     ESP_LOGI(SIO_TAG, "Performing SocketIO Namespace Connection Request...");
+
+//     err = esp_http_client_perform(client);
+//     if (err == ESP_OK) {
+//         esp_event_post(SIO_EVENT, SIO_EVENT_CONNECTED_HTTP, sid, SIO_SID_SIZE, pdMS_TO_TICKS(50));
+
+//         // Begin long-polling
+//         xTaskCreate(&socketio_polling, "socketio_polling",  2048, NULL, 6, NULL);
+
+//         ESP_LOGI(SIO_TAG, "HTTP POST Status = %d, content_length = %d",
+//                 esp_http_client_get_status_code(client),
+//                 esp_http_client_get_content_length(client));
+//     } else {
+//         esp_event_post(SIO_EVENT, SIO_EVENT_CONNECT_ERROR, sid, SIO_SID_SIZE, pdMS_TO_TICKS(50));
+
+//         ESP_LOGE(SIO_TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
+//     }
+
+// 	vTaskDelete(NULL);
+// }
 
 // todo: move to user-space
 esp_err_t _http_event_handler(esp_http_client_event_t *evt)
@@ -205,7 +291,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
             ESP_LOGD(SIO_TAG, "HTTP_EVENT_ON_FINISH");
             if (output_buffer != NULL) {
                 // Response is accumulated in output_buffer. Uncomment the below line to print the accumulated response
-                // ESP_LOG_BUFFER_HEX(TAG, output_buffer, output_len);
+                // ESP_LOG_BUFFER_HEX(SIO_TAG, output_buffer, output_len);
                 free(output_buffer);
                 output_buffer = NULL;
             }

@@ -27,7 +27,10 @@ extern "C" {
 #include "esp_types.h"
 #include "esp_log.h"
 
-static const char *SIO_UTIL_TAG = "sio.util";
+#define TOKEN_CHARSET_SIZE 61
+
+static const char *SIO_UTIL_TAG = "sio:util";
+static const char token_charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 /**
  * @brief Optimized and safe string concatenation function.
@@ -61,7 +64,19 @@ void util_substr(
 );
 
 /**
- * @brief Returns pointer to a cleaned JSON body form any arbitrary string
+ * @brief Returns a random string with provided length.
+ * 
+ * @note Thanks to StackExchange user William Morris for sharing this function.
+ * 
+ * @link https://codereview.stackexchange.com/a/29200
+ * 
+ * @param length 
+ * @return char* 
+ */
+char *util_mkrndstr(size_t length);
+
+/**
+ * @brief Returns pointer to a cleaned JSON body from any arbitrary string
  * containing one JSON body.
  * 
  * @note Thanks to Reddit user u/ogiota for sharing this function.
