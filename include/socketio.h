@@ -40,7 +40,16 @@ extern "C" {
 #include "esp_websocket_client.h"
 #include "cJSON.h"
 
+#include "socketio_types.h"
 #include "utility.h"
+
+/*
+ * ----------------------------------------------------------
+ *
+ *              Defines and component constants.
+ *
+ * ----------------------------------------------------------
+ */
 
 // todo: make these kconfig configurable
 #define EIO_VERSION 4
@@ -49,91 +58,14 @@ extern "C" {
 #define SIO_DEFAULT_MAX_CONN_RETRIES 3
 #define SIO_DEFAULT_RETRY_INTERVAL_MS 3000
 
+#define SIO_MAX_URL_LENGTH 512
 #define SIO_TRANSPORT_POLLING_STRING "polling"
 #define SIO_TRANSPORT_WEBSOCKETS_STRING "websockets"
 #define MAX_HTTP_RECV_BUFFER 512
 #define SIO_SID_SIZE 20
 #define SIO_TOKEN_SIZE 7
-#define ASCII_RS = 
+#define ASCII_RS ""
 #define ASCII_RS_INDEX = 30
-
-/**
- * @brief Represents the state of the SocketIO client.
- * 
- */
-// todo: change to typedef
-const enum sio_client_status {
-    SIO_CLIENT_DISCONNECTED,
-    SIO_CLIENT_CONNECTING,
-    SIO_CLIENT_CONNECTED_HTTP,
-    SIO_CLIENT_UPGRADING,
-    SIO_CLIENT_CONNECTED_WS
-};
-// todo: change to typedef
-static const enum eio_packet_type {
-    EIO_PACKET_OPEN,
-    EIO_PACKET_CLOSE,
-    EIO_PACKET_PING,
-    EIO_PACKET_PONG,
-    EIO_PACKET_MESSAGE,
-    EIO_PACKET_UPGRADE,
-    EIO_PACKET_NOOP
-};
-// todo: change to typedef
-static const enum sio_packet_type {
-    SIO_PACKET_CONNECT,
-    SIO_PACKET_DISCONNECT,
-    SIO_PACKET_EVENT,
-    SIO_PACKET_ACK,
-    SIO_PACKET_CONNECT_ERROR,
-    SIO_PACKET_BINARY_EVENT,
-    SIO_PACKET_BINARY_ACK
-};
-
-/**
- * @brief SocketIO event base declaration
- * 
- */
-ESP_EVENT_DECLARE_BASE(SIO_EVENT);
-
-/**
- * @brief SocketIO event declarations
- * 
- */
-typedef enum {
-    SIO_EVENT_READY = 0,                    /* SocketIO Client ready */
-    SIO_EVENT_CONNECTED_HTTP,               /* SocketIO Client connected over HTTP */
-    SIO_EVENT_CONNECTED_WS,                 /* SocketIO Client connected over WebSockets */
-    SIO_EVENT_RECEIVED_MESSAGE,             /* SocketIO Client received message */
-    SIO_EVENT_CONNECT_ERROR,                /* SocketIO Client failed to connect */
-    SIO_EVENT_UPGRADE_TRANSPORT_ERROR,      /* SocketIO Client failed upgrade transport */
-    SIO_EVENT_DISCONNECTED                  /* SocketIO Client disconnected */
-} sio_event_t;
-
-/**
- * @brief SocketIO available transport types
- * 
- */
-typedef enum {
-    SIO_TRANSPORT_POLLING,      /* polling */
-    SIO_TRANSPORT_WEBSOCKETS    /* websockets */
-} sio_transport_t;
-
-/**
- * @brief SocketIO client type
- * 
- */
-typedef struct {
-    uint8_t eio_version;                          /* EngineIO protocol version */
-    uint8_t max_connect_retries; /* Maximum connection retry attempts */
-    uint8_t retry_interval_ms;  /* Pause between retry attempts */
-    esp_http_client_handle_t *http_client;                      /* ESP HTTP client handle */
-    sio_transport_t transport;          /* Preferred SocketIO transport */
-    const char *server_address;                                 /* SocketIO server address with port */
-    char *token;                                                /* Random token for cache prevention */
-    char *session_id;                                           /* SocketIO session ID */
-    char *namespace;                    /* SocketIO namespace */
-} sio_client_t;
 
 /**
  * @brief Module tag used in log.
@@ -141,10 +73,34 @@ typedef struct {
  */
 static const char *SIO_TAG = "sio";
 
+/**
+ * @brief SocketIO event base declaration
+ * 
+ */
+ESP_EVENT_DECLARE_BASE(SIO_EVENT);
+
+/*
+ * ----------------------------------------------------------
+ *
+ *              Internal function prototypes.
+ *
+ * ----------------------------------------------------------
+ */
+
 static esp_err_t socketio_http_handshake(sio_client_t *sio_client);
 static esp_err_t socketio_compile_url(const char *url, const char *server_address);
+static void socketio_polling(void* pvParameters);
+static esp_err_t socketio_parse_message_queue(sio_client_t* socketio_client, char* content);
+static esp_err_t socketio_send_pong(sio_client_t* socketio_client);
+static esp_err_t socketio_send_pong_http(sio_client_t* socketio_client);
 
-// static void socketio_polling(void *ignore);
+/*
+ * ----------------------------------------------------------
+ *
+ *      Prototypes for functions of the public API.
+ *
+ * ----------------------------------------------------------
+ */
 
 /**
  * @brief Initialize the SocketIO client with default values
