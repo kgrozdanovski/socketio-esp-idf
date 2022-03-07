@@ -53,3 +53,12 @@ Make sure you are connecting to a SocketIO (non-WSS) server and not a standard W
 Make sure the server is listening to the port 80 and that the same is not behind a firewall.
 
 Make sure the server permits the 'origin' from which you are sending packets.
+
+## Disclaimer
+
+This project was started with the purpose of learning more about C, ESP-IDF, protocol implementation and reverse-engineering. It was never
+intended to be fully-functional or regularly maintained therefore parts of the codebase may be sub-optimal, disorganized or poorly implemented.
+
+Please do not use this in a production environment and let it serve only as a reference-implementation of an otherwise poorly-documented protocol.
+
+In case there is sufficient interest for both using and contributing to this project I would be willing to help clean-up the code and organize the effort.
