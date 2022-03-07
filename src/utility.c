@@ -27,13 +27,16 @@ char *util_str_cat(char *destination, char *source)
     return --destination;
 }
 
-void util_substr(
+esp_err_t util_substr(
     char *substr,
     char *source,
     size_t *source_len,
     int start,
     int end
-) {
+) {    
+    ESP_LOGW(SIO_UTIL_TAG, "source: %s", source);
+    ESP_LOGW(SIO_UTIL_TAG, "source_len: %d", *source_len);
+
     int j = 0;
     for (int i = 0; i < *source_len; i = i + 1)
     {
@@ -43,6 +46,13 @@ void util_substr(
             j = j + 1;
         }
     }
+
+    // null terminate destination string
+    // if (*source_len != end) {
+    //     *substr = '\0';
+    // }
+
+    return ESP_OK;
 }
 
 char *util_mkrndstr(size_t length)
@@ -73,7 +83,6 @@ char *util_extract_json(char *pc_buffer)
         ESP_LOGW(SIO_UTIL_TAG, "util_extract_json(): EMPTY STRING!");
         return NULL;
     }
-    int32_t i_strlen_original = i_strlen;
 
     // Trim left
     bool b_found_trim_pos = false;

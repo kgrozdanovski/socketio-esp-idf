@@ -170,9 +170,8 @@ esp_err_t socketio_http_handshake(sio_client_t* sio_client)
 
     ESP_LOGV(SIO_TAG, "nc_request_url: %s", nc_request_url);
 
-    uint8_t post_data_numeric = EIO_PACKET_MESSAGE * 10 + SIO_PACKET_CONNECT;
     char* post_data = malloc(3);
-    snprintf(post_data, 3, "%d", post_data_numeric);
+    snprintf(post_data, 3, "%d%d", EIO_PACKET_MESSAGE, SIO_PACKET_CONNECT);
 
     esp_http_client_set_url(http_client, nc_request_url); 
     esp_http_client_set_method(http_client, HTTP_METHOD_POST);
@@ -285,24 +284,19 @@ void socketio_polling(void* pvParameters)
         vTaskDelay(pdMS_TO_TICKS(sio_client->ping_interval_ms));
     }
 
-    // /*
-    //  * We are expecting an EngineIO encoded response body 
-    //  * 
-    //  */
-    // util_extract_json(&response_buffer);
-    // ESP_LOGD(SIO_TAG, "Cleaned response buffer: %s", response_buffer);
-
 	vTaskDelete(NULL);
 }
 
 esp_err_t socketio_parse_message_queue(sio_client_t* socketio_client, char* content)
 {
+    size_t token_length;
+
     // Extract the first token
     char* token = strtok(content, ASCII_RS);
 
     // loop through the string to extract all other tokens
     while(token != NULL) {
-        ESP_LOGI(SIO_TAG, "%s\n", token);
+        token_length = strlen(token);
 
         if (strcmp(token, socketio_get_eio_packet_type(EIO_PACKET_PING)) == 0) {
             // Server sent a PING packet, expects PONG
@@ -312,6 +306,22 @@ esp_err_t socketio_parse_message_queue(sio_client_t* socketio_client, char* cont
             // Server sent a CLOSE packet
             ESP_LOGI(SIO_TAG, "Connection to SocketIO server closed.");
             esp_event_post(SIO_EVENT, SIO_EVENT_DISCONNECTED, socketio_client->session_id, SIO_SID_SIZE, pdMS_TO_TICKS(50));
+        } else if (socketio_is_message(token, &token_length)) {
+            // Server sent a MESSAGE packet
+            esp_event_post(SIO_EVENT, SIO_EVENT_RECEIVED_MESSAGE, socketio_client->session_id, SIO_SID_SIZE, pdMS_TO_TICKS(50));
+
+            // TODO: WRAP UP IN "ONMESSAGE" HANDLER
+            
+            // Remove the first two characters indicating event types
+            char* body = malloc(SIO_MAX_EVENT_BODY);
+            sprintf(body, "%.*s", (int) token_length - 2, token + 2);
+
+            cJSON* iterator = NULL;
+            cJSON* cjson_body = cJSON_Parse(body);
+            cJSON* event_name = cJSON_GetArrayItem(cjson_body, 0);
+            cJSON* event_message = cJSON_GetArrayItem(cjson_body, 1);
+
+            socketio_client->on_event(event_name->valuestring, event_message->valuestring);
         } else {
             ESP_LOGI(SIO_TAG, "token: %s", token);
         }
@@ -389,6 +399,21 @@ esp_err_t socketio_send_pong_http(sio_client_t* socketio_client)
     esp_http_client_cleanup(http_client);
 
     return ESP_OK;
+}
+
+bool socketio_is_message(char* token, size_t* token_length)
+{
+    // Form a string from the EIO and SIO packet types to match the combination we are expecting.
+    char* socketio_message_indicator = malloc(3);
+    snprintf(socketio_message_indicator, 3, "%d%d", EIO_PACKET_MESSAGE, SIO_PACKET_EVENT);
+
+    // Form a substring. The first two characters represent the EIO and SIO packet type respectfully.
+    char token_event_types[3] = {token[0], token[1], '\0'};
+
+    if (strcmp(token_event_types, socketio_message_indicator) == 0) {
+        return true;
+    }
+    return false;
 }
 
 // todo: move to user-space

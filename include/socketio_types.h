@@ -42,6 +42,20 @@ typedef enum {
 } eio_packet_t;
 
 /**
+ * @brief Represents a SocketIO packet type
+ * 
+ */
+typedef enum {
+    SIO_PACKET_CONNECT,
+    SIO_PACKET_DISCONNECT,
+    SIO_PACKET_EVENT,
+    SIO_PACKET_ACK,
+    SIO_PACKET_CONNECT_ERROR,
+    SIO_PACKET_BINARY_EVENT,
+    SIO_PACKET_BINARY_ACK
+} sio_packet_t;
+
+/**
  * @brief SocketIO event declarations
  * 
  */
@@ -68,20 +82,6 @@ typedef enum {
 } sio_client_status_t;
 
 /**
- * @brief Represents a SocketIO packet type
- * 
- */
-typedef enum {
-    SIO_PACKET_CONNECT,
-    SIO_PACKET_DISCONNECT,
-    SIO_PACKET_EVENT,
-    SIO_PACKET_ACK,
-    SIO_PACKET_CONNECT_ERROR,
-    SIO_PACKET_BINARY_EVENT,
-    SIO_PACKET_BINARY_ACK
-} sio_packet_t;
-
-/**
  * @brief SocketIO available transport types
  * 
  */
@@ -89,6 +89,15 @@ typedef enum {
     SIO_TRANSPORT_POLLING,      /* polling */
     SIO_TRANSPORT_WEBSOCKETS    /* websockets */
 } sio_transport_t;
+
+/**
+ * @brief Function pointer which should map to a user-defined function
+ * accepting a single char pointer argument.
+ * 
+ * @param[out] message     : Pointer to data buffer where event data is stored.
+ * 
+ */
+typedef void (*sio_on_event_fptr_t)(char* event_name, char* message);
 
 /**
  * @brief SocketIO client type
@@ -105,6 +114,7 @@ typedef struct {
     char *token;                    /* Random token for cache prevention */
     char *session_id;               /* SocketIO session ID */
     char *namespace;                /* SocketIO namespace */
+    sio_on_event_fptr_t on_event;    /* Function-pointer to user-defined function */
 } sio_client_t;
 
 /*

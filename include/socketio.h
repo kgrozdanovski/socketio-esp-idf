@@ -56,8 +56,9 @@ extern "C" {
 #define SIO_DEFAULT_NAMESPACE "/"
 #define SIO_DEFAULT_URL_PATH "/socket.io"
 #define SIO_DEFAULT_MAX_CONN_RETRIES 3
-#define SIO_DEFAULT_RETRY_INTERVAL_MS 3000
+#define SIO_DEFAULT_RETRY_INTERVAL_MS 3000u
 
+#define SIO_MAX_EVENT_BODY 512
 #define SIO_MAX_URL_LENGTH 512
 #define SIO_TRANSPORT_POLLING_STRING "polling"
 #define SIO_TRANSPORT_WEBSOCKETS_STRING "websockets"
@@ -93,6 +94,7 @@ static void socketio_polling(void* pvParameters);
 static esp_err_t socketio_parse_message_queue(sio_client_t* socketio_client, char* content);
 static esp_err_t socketio_send_pong(sio_client_t* socketio_client);
 static esp_err_t socketio_send_pong_http(sio_client_t* socketio_client);
+static bool socketio_is_message(char* token, size_t* token_length);
 
 /*
  * ----------------------------------------------------------

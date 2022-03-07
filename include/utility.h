@@ -26,6 +26,7 @@ extern "C" {
 
 #include "esp_types.h"
 #include "esp_log.h"
+#include "esp_err.h"
 
 #define TOKEN_CHARSET_SIZE 61
 
@@ -50,12 +51,13 @@ char* util_str_cat(char *destination, char *source);
  * @brief Extrapolate a substring from a C string.
  * 
  * @param substr 
- * @param string 
+ * @param source 
  * @param start 
  * @param end 
- * @return void
+ * 
+ * @return esp_err_t
  */
-void util_substr(
+esp_err_t util_substr(
     char *substr,
     char *source,
     size_t *source_len,
