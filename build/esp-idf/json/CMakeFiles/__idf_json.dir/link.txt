@@ -1,2 +1,0 @@
-/home/kristijan/.espressif/tools/xtensa-esp32-elf/esp-2019r2-8.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-ar qc libjson.a  CMakeFiles/__idf_json.dir/cJSON/cJSON.c.obj CMakeFiles/__idf_json.dir/cJSON/cJSON_Utils.c.obj CMakeFiles/__idf_json.dir/cJSON/test.c.obj
-/home/kristijan/.espressif/tools/xtensa-esp32-elf/esp-2019r2-8.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-ranlib libjson.a
