@@ -1,0 +1,12 @@
+menu "socketio-esp-idf"
+
+    config EIO_VERSION
+        int "Engine IO Version"
+        range 1 5
+        default 4
+        help
+            Engine IO Version for the protocol
+
+    
+
+endmenu
