@@ -30,7 +30,7 @@ void socketio_client_init(sio_client_t *sio_client, const char *server_address)
     sio_client->retry_interval_ms = SIO_DEFAULT_RETRY_INTERVAL_MS;
     sio_client->eio_version = EIO_VERSION;
     sio_client->transport = SIO_TRANSPORT_POLLING;
-    sio_client->namespace = SIO_DEFAULT_NAMESPACE;
+    sio_client->sio_namespace = SIO_DEFAULT_NAMESPACE;
     sio_client->token = util_mkrndstr(SIO_TOKEN_SIZE);
 }
 
@@ -188,7 +188,7 @@ esp_err_t socketio_http_handshake(sio_client_t* sio_client)
         // Begin long-polling
         xTaskCreate(&socketio_polling, "socketio_polling",  4096, (void *) sio_client, 6, NULL);
 
-        ESP_LOGI(SIO_TAG, "HTTP POST Status = %d, content_length = %d",
+        ESP_LOGI(SIO_TAG, "HTTP POST Status = %d, content_length = %llu",
                 esp_http_client_get_status_code(http_client),
                 esp_http_client_get_content_length(http_client));
     } else {
@@ -385,7 +385,7 @@ esp_err_t socketio_send_pong_http(sio_client_t* socketio_client)
         // Reset the SocketIO token to avoid caching
         socketio_client->token = util_mkrndstr(SIO_TOKEN_SIZE);
 
-        ESP_LOGI(SIO_TAG, "HTTP POST Status = %d, content_length = %d",
+        ESP_LOGI(SIO_TAG, "HTTP POST Status = %d, content_length = %llu",
                 esp_http_client_get_status_code(http_client),
                 esp_http_client_get_content_length(http_client));
     } else {
@@ -483,11 +483,9 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
                 ESP_LOGI(SIO_TAG, "Last mbedtls failure: 0x%x", mbedtls_err);
             }
             break;
-        // case HTTP_EVENT_REDIRECT:
-        //     ESP_LOGD(SIO_TAG, "HTTP_EVENT_REDIRECT");
-        //     esp_http_client_set_header(evt->client, "From", "user@example.com");
-        //     esp_http_client_set_header(evt->client, "Accept", "text/html");
-        //     break;
+         case HTTP_EVENT_REDIRECT:
+             ESP_LOGD(SIO_TAG, "HTTP_EVENT_REDIRECT");
+             break;
     }
     return ESP_OK;
 }
